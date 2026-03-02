@@ -39,7 +39,7 @@ class ListValue(object):
     def __init__(self, value, dtype=None):
         if value is not None:
             self.value = value
-            self.dtype = type(value[0])
+            self.dtype = type(value[0]) if value else dtype
         else:
             self.value = None
             self.dtype = dtype
