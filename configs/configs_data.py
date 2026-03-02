@@ -21,6 +21,25 @@ from protenix.config.extend_types import GlobalConfigValue, ListValue
 
 PROTENIX_ROOT_DIR = os.environ.get("PROTENIX_ROOT_DIR", str(Path.home()))
 
+# PROTENIX_CCD_DIR overrides the directory for CCD/cluster files only.
+# Useful when files are pre-downloaded to a non-standard location
+# (e.g. a read-only mount like /pxdesign/tool_weights).
+# Defaults to {PROTENIX_ROOT_DIR}/common/ (original behaviour).
+_ccd_dir = os.environ.get("PROTENIX_CCD_DIR", os.path.join(PROTENIX_ROOT_DIR, "common"))
+
+
+def _ccd_path(filename: str) -> str:
+    """Return path to a CCD file, falling back to the date-versioned v20240608 name."""
+    primary = os.path.join(_ccd_dir, filename)
+    if os.path.exists(primary):
+        return primary
+    # Try the date-versioned variant used in pre-downloaded distributions
+    versioned = os.path.join(_ccd_dir, filename.replace("components.cif", "components.v20240608.cif"))
+    if os.path.exists(versioned):
+        return versioned
+    # Return primary regardless (will raise a clear error at use-time)
+    return primary
+
 default_test_configs = {
     "sampler_configs": {
         "sampler_type": "uniform",
@@ -248,14 +267,8 @@ data_configs = {
         ),
         "kalign_binary_path": "/usr/bin/kalign",  # apt-get install kalign
     },
-    "ccd_components_file": os.path.join(PROTENIX_ROOT_DIR, "common/components.cif"),
-    "ccd_components_rdkit_mol_file": os.path.join(
-        PROTENIX_ROOT_DIR, "common/components.cif.rdkit_mol.pkl"
-    ),
-    "obsolete_release_data_csv": os.path.join(
-        PROTENIX_ROOT_DIR, "common/obsolete_release_date.csv"
-    ),
-    "pdb_cluster_file": os.path.join(
-        PROTENIX_ROOT_DIR, "common/clusters-by-entity-40.txt"
-    ),
+    "ccd_components_file": _ccd_path("components.cif"),
+    "ccd_components_rdkit_mol_file": _ccd_path("components.cif.rdkit_mol.pkl"),
+    "obsolete_release_data_csv": os.path.join(_ccd_dir, "obsolete_release_date.csv"),
+    "pdb_cluster_file": os.path.join(_ccd_dir, "clusters-by-entity-40.txt"),
 }
